@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Firebase Notification Demo</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js"></script>
+</head>
+<body>
+  <h1>Doctor Dashboard</h1>
+  <div id="content">Home Page</div>
+
+  <script>
+    // ✅ Firebase config (same as your SW)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAnGNsf7SREctRzhuaG0OXoq2mEQt2eMU4",
+      authDomain: "fir-send-notification-e6a29.firebaseapp.com",
+      projectId: "fir-send-notification-e6a29",
+      storageBucket: "fir-send-notification-e6a29.appspot.com",
+      messagingSenderId: "428899144439",
+      appId: "1:428899144439:web:4be7bf84a3cbd30d90f9f2",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    // ✅ Register service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/firebase-messaging-sw.js")
+        .then((registration) => {
+          console.log("Service Worker registered:", registration);
+        });
+
+      // ✅ Listen for messages from SW
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        console.log("Message from SW:", event.data);
+        if (event.data.patientUrl) {
+          loadPage(event.data.patientUrl);
+        }
+      });
+    }
+
+    // ✅ Handle foreground messages
+    messaging.onMessage((payload) => {
+      console.log("Foreground message:", payload);
+      alert("Notification: " + payload.notification.title);
+    });
+
+    // ✅ Simple router function
+    function loadPage(path) {
+      const content = document.getElementById("content");
+      if (path.startsWith("/patient/")) {
+        const patientId = path.split("/").pop();
+        content.innerHTML = `<h2>Patient Details</h2><p>Patient ID: ${patientId}</p>`;
+      } else {
+        content.innerHTML = "Home Page";
+      }
+    }
+  </script>
+</body>
+</html>
