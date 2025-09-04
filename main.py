@@ -48,6 +48,7 @@ async def send_fcm_message(data: dict):
                 "body": f"Age : {age}, BP: {bp}, Pulse: {pulse}, Glucose: {glucose}, Temp: {temperature}°C"
             },
             "data": {
+                "url": f"/patient/{patient_id}",
                 "patient_id": str(patient_id),
                 "patient_name": str(patient_name),
                 "age": str(age),
