@@ -99,6 +99,9 @@ async def send_fcm_message(data: dict):
     }
 
 # ✅ Normal endpoint (real data from Postman or sensors)
+@app.get("/")
+def home():
+    return "Welcome"
 @app.post("/send-health-data")
 async def send_health_data(body: dict):
     return await send_fcm_message(body)
