@@ -2,60 +2,64 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Firebase Notification Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patient Details</title>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <h1>Doctor Dashboard</h1>
-  <div id="content">Home Page</div>
+  <h1>Patient Details</h1>
+  <div id="patient">Loading...</div>
 
   <script>
-    // ✅ Firebase config (same as your SW)
+    // ✅ Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAnGNsf7SREctRzhuaG0OXoq2mEQt2eMU4",
       authDomain: "fir-send-notification-e6a29.firebaseapp.com",
       projectId: "fir-send-notification-e6a29",
       storageBucket: "fir-send-notification-e6a29.appspot.com",
       messagingSenderId: "428899144439",
-      appId: "1:428899144439:web:4be7bf84a3cbd30d90f9f2",
+      appId: "1:428899144439:web:4be7bf84a3cbd30d90f9f2"
     };
 
+    // ✅ Init Firebase
     firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
+    const db = firebase.firestore();
 
-    // ✅ Register service worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/firebase-messaging-sw.js")
-        .then((registration) => {
-          console.log("Service Worker registered:", registration);
+    // ✅ Extract patient ID from URL
+    const path = window.location.pathname;
+    if (path.startsWith("/patient/")) {
+      const patientId = path.split("/patient/")[1];
+
+      db.collection("notification")
+        .where("patient_id", "==", patientId)
+        .orderBy("timestamp", "desc")
+        .limit(1)
+        .get()
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            const ts = data.timestamp?.toDate ? data.timestamp.toDate() : data.timestamp;
+
+            document.getElementById("patient").innerHTML = `
+              <p><b>Patient Name:</b> ${data.patient_name}</p>
+              <p><b>Age:</b> ${data.age}</p>
+              <p><b>BP:</b> ${data.bp}</p>
+              <p><b>Pulse:</b> ${data.pulse}</p>
+              <p><b>Glucose:</b> ${data.glucose}</p>
+              <p><b>Temperature:</b> ${data.temperature}°C</p>
+              <p><i>Last updated: ${ts}</i></p>
+            `;
+          } else {
+            document.getElementById("patient").innerText = "No data found for " + patientId;
+          }
+        })
+        .catch(err => {
+          console.error("Error loading patient:", err);
+          document.getElementById("patient").innerText = "Error loading patient data.";
         });
-
-      // ✅ Listen for messages from SW
-      navigator.serviceWorker.addEventListener("message", (event) => {
-        console.log("Message from SW:", event.data);
-        if (event.data.patientUrl) {
-          loadPage(event.data.patientUrl);
-        }
-      });
-    }
-
-    // ✅ Handle foreground messages
-    messaging.onMessage((payload) => {
-      console.log("Foreground message:", payload);
-      alert("Notification: " + payload.notification.title);
-    });
-
-    // ✅ Simple router function
-    function loadPage(path) {
-      const content = document.getElementById("content");
-      if (path.startsWith("/patient/")) {
-        const patientId = path.split("/").pop();
-        content.innerHTML = `<h2>Patient Details</h2><p>Patient ID: ${patientId}</p>`;
-      } else {
-        content.innerHTML = "Home Page";
-      }
+    } else {
+      document.getElementById("patient").innerText = "No patient selected.";
     }
   </script>
 </body>
